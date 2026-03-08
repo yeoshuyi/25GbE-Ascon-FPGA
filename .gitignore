@@ -4,6 +4,20 @@
 *.str
 /fpga/vivado/
 
+#Cocotb and Sim
+**/sim_build/
+**/*.vcd
+**/*.fst
+**/*.vvp
+results.xml
 
 #Py
-*.venv
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.venv/
+
+# System specific
+.DS_Store
+Thumbs.db
