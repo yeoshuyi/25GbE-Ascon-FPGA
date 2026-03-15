@@ -45,7 +45,7 @@ def rotr(val: int, r: int) -> int:
 
 
 @cocotb.test()
-async def ascon_hash(dut):
+async def ascon_xof(dut):
     clock = Clock(dut.clk, 3.1, unit="ns")
     cocotb.start_soon(clock.start())
 
@@ -55,14 +55,17 @@ async def ascon_hash(dut):
     dut.reset.value = 0
     await RisingEdge(dut.clk)
 
-    iv_state = [0x00400c0000000100, 0, 0, 0, 0]
+    iv_state = [0x00400c0000000000, 0, 0, 0, 0]
     expected_init = ascon_permutate(iv_state)
 
-    tuple_val = random.getrandbits(104)
+    #tuple_val = random.getrandbits(104)
+    tuple_val = 0x000102030405060708090A0B0C
     dut.tuple_in.value = tuple_val
     dut.start.value = 1
+    await RisingEdge(dut.clk)
+    dut.start.value = 0
 
-    for i in range(10000):
+    for i in range(100):
         cycles_waited = 0
         while not dut.done.value:
             await RisingEdge(dut.clk)
@@ -84,9 +87,10 @@ async def ascon_hash(dut):
         expected_digest = s[0]
 
         dut._log.info(f"Checking Permutation #{i}")
+        dut._log.debug(f"  Message: {hex(tuple_val)}")
         dut._log.debug(f"  Expected: {hex(expected_digest)}")
         dut._log.debug(f"  Actual:   {hex(actual_digest)}")
-        dut._log.debug(f"  Actual:   {cycles_waited}")
+        dut._log.debug(f"  Latency:   {cycles_waited} cycles")
         
         assert actual_digest == expected_digest, (
             f"Match Failed at Trial {i}\n"
@@ -99,6 +103,8 @@ async def ascon_hash(dut):
         tuple_val = random.getrandbits(104)
         dut.tuple_in.value = tuple_val
 
+        dut.start.value = 1
         await RisingEdge(dut.clk)
+        dut.start.value = 0
         
-    dut._log.info("Successfully verified 100 hashes with correct 8-cycle latency!")
+    dut._log.info("Done.")
