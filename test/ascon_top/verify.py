@@ -46,7 +46,7 @@ def rotr(val: int, r: int) -> int:
 
 @cocotb.test()
 async def ascon_xof(dut):
-    clock = Clock(dut.clk, 3.1, unit="ns")
+    clock = Clock(dut.clk, 8, unit="ns")
     cocotb.start_soon(clock.start())
 
     dut.reset.value = 1
@@ -65,7 +65,7 @@ async def ascon_xof(dut):
     await RisingEdge(dut.clk)
     dut.start.value = 0
 
-    for i in range(100):
+    for i in range(100000):
         cycles_waited = 0
         while not dut.done.value:
             await RisingEdge(dut.clk)
