@@ -23,10 +23,36 @@ This specific implementation targets a 125MHz Frequency (Common for SmartNIC log
 ## Documentation
 
 ### Block Diagram
-> WIP.
+#### `Load Balancer (WIP)`
+![alt text](img/ascon_load_distribute.png)
+* To keep up with 25GbE Line Rate, a new 5-tuple has to be processed every 26.88ns at worst case (non-stop transmission of tiny 672-bit ethernet packets).
+* Each Ascon-CXOF core is able to process a new 5-tuple every 80ns.
+* 3 Ascon-CXOF cores takes turn to process a 5-tuple in round-robbin style, and tags the digest to the ethernet packet in the FIFO.
+* Load balancer distributes the ethernet packets downstream based on the 64-bit tag.
 
+#### `Ascon-CXOF128 Core`
+![alt text](img/ascon_cxof_core.png)
+* Initial Precompute is the result of precomputed initialisation and first round of customization, as these 2 rounds are constant. This optimization removes 6 cycles of latency.
+$$S_{\text{Initial Precompute}} = p^{12} \left( p^{12}(\text{IV}) \oplus (0x40 \parallel 0^{256})\right)$$
+* Secret Key is rotated based on epoch. (Yet to be implemented)
+* Each Ascon-p[12] round is pipelined.
+
+#### `Ascon-Permute[12]`
+![alt text](img/ascon_permute.png)
+* 6 Rounds of Constant-Addition, S-Box and Linear Diffusion is unrolled each clock cycle.
+* Each Ascon-Permute[12] takes 3 clock cyles total (with 1 cycle for IO registering).
 ### RTL Modules
-> WIP.
+#### `ascon_wrap.sv (WIP)`
+This module wraps 3 Ascon Cores and includes the round-robbin arbiter.
+
+#### `ascon_cxof128.sv`
+This module contains the Ascon-CXOF128 Core.
+
+#### `ascon_permute.sv`
+This module contains the unrolling logic for 12 Ascon Permute rounds.
+
+#### `ascon_round.sv`
+This moudule contains the logic for each Ascon Permute round.
 
 ## Testing
 Running the testbench requires cocotb and Icarus Verilog via Makefile.
